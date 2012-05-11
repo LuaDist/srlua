@@ -1,0 +1,22 @@
+0  ICON  "lua.ico"
+
+1 VERSIONINFO
+ FILEVERSION 5,2,0,0
+ PRODUCTVERSION 5,2,0,0
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "www.luadist.org\0"
+            VALUE "CompanyName", "LuaDist.org\0"
+            VALUE "FileDescription", "Lua script to executable glue tool\0"
+            VALUE "FileVersion", "5.2.0\0"
+            VALUE "LegalCopyright", "Copyright © 1994-2011 Lua.org, PUC-Rio.\0"
+            VALUE "OriginalFilename", "glue.exe\0"
+            VALUE "ProductName", "glue - Lua script to executable glue tool\0"
+            VALUE "ProductVersion", "5.2.0\0"
+            VALUE "PrivateBuild", "Built using LuaDist\0"
+        END
+    END
+END

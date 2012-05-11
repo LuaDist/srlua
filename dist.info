@@ -1,0 +1,14 @@
+--- This file is part of LuaDist project
+
+name = "srlua"
+version = "5.2"
+
+desc = "A tool for building self-running Lua programs."
+author = "Luiz Henrique de Figueiredo"
+license = "MIT/X11"
+url = "http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/"
+maintainer = "Peter Drahoš"
+
+depends = {
+  "lua ~> 5.2",
+}
