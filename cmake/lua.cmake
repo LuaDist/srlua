@@ -41,25 +41,26 @@ macro ( install_lua_executable _name _source )
   
   if ( NOT SKIP_LUA_WRAPPER AND SRLUA_EXECUTABLE AND GLUE_EXECUTABLE )
     # Generate binary gluing the lua code to srlua
-	set ( LUA_WRAPPER ${CMAKE_CURRENT_BINARY_DIR}/${_name}${CMAKE_EXECUTABLE_SUFFIX} )
     add_custom_command(
-      OUTPUT ${LUA_WRAPPER}
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_name}
       COMMAND ${GLUE_EXECUTABLE} 
-      ARGS ${SRLUA_EXECUTABLE} ${_source} ${LUA_WRAPPER}
+      ARGS ${SRLUA_EXECUTABLE} ${_source} ${CMAKE_CURRENT_BINARY_DIR}/${_name}
       DEPENDS ${_source}
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
       VERBATIM
     )
     # Make sure we have a target associated with the binary
     add_custom_target(${_name} ALL
-        DEPENDS ${LUA_WRAPPER}
+        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_name}
     )
     # Install with run permissions
-    install ( PROGRAMS ${LUA_WRAPPER} DESTINATION ${INSTALL_BIN} )
+    install ( PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${_name} DESTINATION ${INSTALL_BIN} COMPONENT Runtime)
   else()
     # Add .lua suffix and install as is
     install ( PROGRAMS ${_source} DESTINATION ${INSTALL_BIN}
-            RENAME ${_source_name}.lua )
+            RENAME ${_source_name}.lua 
+            COMPONENT Runtime
+    )
   endif()
 endmacro ()
 
@@ -103,7 +104,9 @@ macro ( _lua_module_helper is_install _name )
 
     if ( ${is_install} )
       install ( FILES ${_first_source} DESTINATION ${INSTALL_LMOD}/${_module_dir}
-                RENAME ${_module_filename} )
+                RENAME ${_module_filename} 
+                COMPONENT Runtime
+      )
     endif ()
   else ()  # Lua C binary module
     enable_language ( C )
@@ -124,7 +127,7 @@ macro ( _lua_module_helper is_install _name )
     set_target_properties ( ${_target} PROPERTIES LIBRARY_OUTPUT_DIRECTORY
                 "${_module_dir}" PREFIX "" OUTPUT_NAME "${_module_filenamebase}" )
     if ( ${is_install} )
-      install ( TARGETS ${_target} DESTINATION ${INSTALL_CMOD}/${_module_dir})
+      install ( TARGETS ${_target} DESTINATION ${INSTALL_CMOD}/${_module_dir} COMPONENT Runtime)
     endif ()
   endif ()
 endmacro ()
