@@ -58,7 +58,11 @@ static void load(lua_State *L, const char *name)
   while (--S.size>0 && c!='\n') c=getc(f);
  else
   ungetc(c,f);
+#if LUA_VERSION_NUM <= 501
+ if (lua_load(L,myget,&S,"=")!=0) lua_error(L);
+#else
  if (lua_load(L,myget,&S,"=",NULL)!=0) lua_error(L);
+#endif
  fclose(f);
 }
 
@@ -97,12 +101,52 @@ static void fatal(const char* progname, const char* message)
  exit(EXIT_FAILURE);
 }
 
+#ifndef _WIN32
+#define MAX_PATH 4096
+static int execpath(char *prog, char *out, int outlen)
+{
+ FILE *test;
+ char *path, *tok;
+
+ if (prog == NULL) return 0;
+
+ strncpy(out, prog, outlen);
+
+ if (prog[0] == '/') return 1;
+
+ test = fopen(prog, "rb");
+ if (test != NULL) {
+  fclose(test);
+  return 1;
+ }
+
+ if ((path = getenv("PATH")) == NULL) {
+  fatal(prog, "executable not in relative path and no PATH env variable available");
+  return 0;
+ }
+
+ for (tok = strtok(path, ":"); tok; tok = strtok(NULL, ":")) {
+  strcpy(out, tok);
+  strcat(out, "/");
+  strcat(out, prog);
+  test = fopen(out, "rb");
+  if (test != NULL) {
+   fclose(test);
+   return 1;
+  }
+ }
+ return 0;
+}
+#endif
+
 int main(int argc, char *argv[])
 {
  lua_State *L;
-#ifdef _WIN32
  char name[MAX_PATH];
- argv[0]= GetModuleFileName(NULL,name,sizeof(name)) ? name : NULL;
+#ifdef _WIN32
+ argv[0] = GetModuleFileName(NULL,name,sizeof(name)) ? name : NULL;
+#else
+ argv[0] = execpath(argv[0],name,sizeof(name)) ? name : NULL;
 #endif
  if (argv[0]==NULL) fatal("srlua","cannot locate this executable");
  L=luaL_newstate();
