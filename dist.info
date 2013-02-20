@@ -1,0 +1,30 @@
+type = "x86"
+arch = "Windows"
+author = "Luiz Henrique de Figueiredo"
+depends = {
+[[lua ~> 5.2]],
+}
+
+desc = "A tool for building self-running Lua programs."
+version = "5.2"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[bin\wsrlua.exe]],
+[[bin\glue.exe]],
+[[bin\srlua.exe]],
+}
+,
+Data = {
+[[share\srlua\README.md]],
+}
+,
+Test = {
+[[share\srlua\test\test.lua]],
+}
+,
+}
+
+license = "MIT/X11"
+name = "srlua"
+url = "http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/"
