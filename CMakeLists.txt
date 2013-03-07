@@ -13,8 +13,16 @@ include_directories ( ${LUA_INCLUDE_DIR} )
 
 add_executable ( glue glue.c glue.rc )
 add_executable ( srlua srlua.c srlua.rc )
+
 target_link_libraries ( glue ${LUA_LIBRARIES} )
 target_link_libraries ( srlua ${LUA_LIBRARIES} )
+
+# No console version on windows
+if (WIN32)
+  add_executable(wsrlua WIN32 wmain.c srlua.c srlua.rc)
+  target_link_libraries ( wsrlua ${LUA_LIBRARIES} )
+  install_executable(wsrlua)
+endif()
 
 install_executable ( glue srlua )
 install_data ( README.md )
