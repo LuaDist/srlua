@@ -107,6 +107,15 @@ IF(LUA_INCLUDE_DIR AND EXISTS "${LUA_INCLUDE_DIR}/lua.h")
   UNSET(lua_version_str)
 ENDIF()
 
+# Lua 5.2
+IF(NOT LUA_VERSION_STRING)
+    FILE(STRINGS "${LUA_INCLUDE_DIR}/lua.h" lua_version_str REGEX "^#define LUA_VERSION_[A-Z]+[ \t]+\"[0-9]+\"")
+    STRING(REGEX REPLACE ".*#define LUA_VERSION_MAJOR[ \t]+\"([0-9]+)\".*" "\\1" LUA_VERSION_MAJOR ${lua_version_str})
+    STRING(REGEX REPLACE ".*#define LUA_VERSION_MINOR[ \t]+\"([0-9]+)\".*" "\\1" LUA_VERSION_MINOR ${lua_version_str})
+    STRING(REGEX REPLACE ".*#define LUA_VERSION_RELEASE[ \t]+\"([0-9]+)\".*" "\\1" LUA_VERSION_RELEASE ${lua_version_str})
+    SET(LUA_VERSION_STRING ${LUA_VERSION_MAJOR}.${LUA_VERSION_MINOR}.${LUA_VERSION_RELEASE})
+ENDIF()
+
 INCLUDE(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set LUA_FOUND to TRUE if 
 # all listed variables are TRUE

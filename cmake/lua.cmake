@@ -11,8 +11,9 @@ set ( INSTALL_LMOD ${INSTALL_LIB}/lua
 set ( INSTALL_CMOD ${INSTALL_LIB}/lua
       CACHE PATH "Directory to install Lua binary modules." )
 
-option ( SKIP_LUA_WRAPPER
-         "Do not build and install Lua executable wrappers." OFF)
+option ( LUA_SKIP_WRAPPER
+         "Do not build and install Lua executable wrappers." OFF )
+option ( LUA_STATIC_MODULE "Build modules for static linking" OFF )
 
 # List of (Lua module name, file path) pairs.
 # Used internally by add_lua_test.  Built by add_lua_module.
@@ -124,13 +125,28 @@ macro ( _lua_module_helper is_install _name )
       list ( APPEND _lua_modules "${_thisname}"
              "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_CFG_INTDIR}/${_module}" )
     endforeach ()
-   
-    add_library( ${_target} MODULE ${_MODULE_SRC})
-    target_link_libraries ( ${_target} ${LUA_LIBRARY} ${_MODULE_LINK} )
-    set_target_properties ( ${_target} PROPERTIES LIBRARY_OUTPUT_DIRECTORY
-                "${_module_dir}" PREFIX "" OUTPUT_NAME "${_module_filenamebase}" )
+	
+    # Static module (not linking to lua)
+    if ( LUA_STATIC_MODULE )
+    	add_library( ${_target} STATIC ${_MODULE_SRC})
+    	target_link_libraries ( ${_target} ${_MODULE_LINK} )
+    else ()
+    # Dynamic module
+      add_library( ${_target} MODULE ${_MODULE_SRC})
+      target_link_libraries ( ${_target} ${LUA_LIBRARY} ${_MODULE_LINK} )
+    endif ()
+
+    set_target_properties ( ${_target} PROPERTIES 
+      ARCHIVE_OUTPUT_DIRECTORY "${_module_dir}" 
+      LIBRARY_OUTPUT_DIRECTORY "${_module_dir}" 
+      PREFIX "" 
+      OUTPUT_NAME "${_module_filenamebase}" )
     if ( ${is_install} )
-      install ( TARGETS ${_target} DESTINATION ${INSTALL_CMOD}/${_module_dir} COMPONENT Runtime)
+      install ( TARGETS ${_target} 
+        LIBRARY DESTINATION ${INSTALL_CMOD}/${_module_dir}
+        COMPONENT Runtime
+        ARCHIVE DESTINATION ${INSTALL_CMOD}/${_module_dir}
+        COMPONENT Library )
     endif ()
   endif ()
 endmacro ()
