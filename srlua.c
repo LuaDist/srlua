@@ -118,8 +118,9 @@ static void fatal(const char* progname, const char* message)
  exit(EXIT_FAILURE);
 }
 
-void getprog(char* progdir) {
+const char* getprog() {
   int nsize = _PATH_MAX + 1;
+  const char* progdir = malloc(nsize * sizeof(char));
   char *lb;
   int n;
 #if defined(__CYGWIN__)
@@ -171,13 +172,14 @@ void getprog(char* progdir) {
   if (n > 1) progdir[--n] = '\0';
 #endif
   if (n == 0 || n == nsize || (lb = strrchr(progdir, (int)LUA_DIRSEP[0])) == NULL)
-    progdir = NULL;
+    return NULL;
+  return (progdir);
 }
 
 int main(int argc, char *argv[])
 {
  lua_State *L;
- getprog(argv[0]);
+ argv[0] = (char*)getprog();
  
  if (argv[0]==NULL) fatal("srlua","cannot locate this executable");
  L=luaL_newstate();
