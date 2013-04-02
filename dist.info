@@ -10,5 +10,5 @@ url = "http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/"
 maintainer = "Peter Drahoš"
 
 depends = {
-  "lua ~> 5.2",
+  "lua ~> 5.1",
 }
