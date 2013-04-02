@@ -6,8 +6,25 @@
 * This code is hereby placed in the public domain.
 */
 
-#ifdef _WIN32
-#include <windows.h>
+#if defined(_WIN32) || defined(__CYGWIN__)
+  #include <windows.h>
+  #define _PATH_MAX MAX_PATH
+#else
+  #define _PATH_MAX PATH_MAX
+#endif
+
+#if defined(__linux__) || defined(__sun)
+  #include <unistd.h> /* readlink */
+#endif
+
+#if defined(__APPLE__)
+  #include <sys/param.h>
+  #include <mach-o/dyld.h>
+#endif
+
+#if defined(__FreeBSD__)
+  #include <sys/types.h>
+  #include <sys/sysctl.h>
 #endif
 
 #include <errno.h>
@@ -101,53 +118,67 @@ static void fatal(const char* progname, const char* message)
  exit(EXIT_FAILURE);
 }
 
-#ifndef _WIN32
-#define MAX_PATH 4096
-static int execpath(char *prog, char *out, int outlen)
-{
- FILE *test;
- char *path, *tok;
+void getprog(char* progdir) {
+  int nsize = _PATH_MAX + 1;
+  char *lb;
+  int n;
+#if defined(__CYGWIN__)
+  char win_buff[_PATH_MAX + 1];
+  GetModuleFileNameA(NULL, win_buff, nsize);
+  cygwin_conv_to_posix_path(win_buff, progdir);
+  n = strlen(progdir);
+#elif defined(_WIN32)
+  n = GetModuleFileNameA(NULL, progdir, nsize);
+#elif defined(__linux__)
+  n = readlink("/proc/self/exe", progdir, nsize);
+  if (n > 0) progdir[n] = 0;
+#elif defined(__sun)
+  pid_t pid = getpid();
+  char linkname[256];
+  sprintf(linkname, "/proc/%d/path/a.out", pid);
+  n = readlink(linkname, progdir, nsize);
+  if (n > 0) progdir[n] = 0;  
+#elif defined(__FreeBSD__)
+  int mib[4];
+  mib[0] = CTL_KERN;
+  mib[1] = KERN_PROC;
+  mib[2] = KERN_PROC_PATHNAME;
+  mib[3] = -1;
+  size_t cb = sizeof(progdir);
+  sysctl(mib, 4, progdir, &cb, NULL, 0);
+  n = cb;
+#elif defined(__BSD__)
+  n = readlink("/proc/curproc/file", progdir, nsize);
+  if (n > 0) progdir[n] = 0;
+#elif defined(__APPLE__)
+  uint32_t nsize_apple = nsize;
+  if (_NSGetExecutablePath((char *)progdir, &nsize_apple) == 0)
+    n = strlen(progdir);
+#else
+  // FALLBACK
+  // Use 'lsof' ... should work on most UNIX systems (incl. OSX)
+  // lsof will list open files, this captures the 1st file listed (usually the executable)
+  int pid;
+  FILE* fd;
+  char cmd[80];
+  pid = getpid();
 
- if (prog == NULL) return 0;
+  sprintf(cmd, "lsof -p %d | awk '{if ($5==\"REG\") { print $9 ; exit}}' 2> /dev/null", pid);
+  fd = popen(cmd, "r");
+  n = fread(progdir, 1, nsize, fd);
 
- strncpy(out, prog, outlen);
-
- if (prog[0] == '/') return 1;
-
- test = fopen(prog, "rb");
- if (test != NULL) {
-  fclose(test);
-  return 1;
- }
-
- if ((path = getenv("PATH")) == NULL) {
-  fatal(prog, "executable not in relative path and no PATH env variable available");
-  return 0;
- }
-
- for (tok = strtok(path, ":"); tok; tok = strtok(NULL, ":")) {
-  strcpy(out, tok);
-  strcat(out, "/");
-  strcat(out, prog);
-  test = fopen(out, "rb");
-  if (test != NULL) {
-   fclose(test);
-   return 1;
-  }
- }
- return 0;
-}
+  // remove newline
+  if (n > 1) progdir[--n] = '\0';
 #endif
+  if (n == 0 || n == nsize || (lb = strrchr(progdir, (int)LUA_DIRSEP[0])) == NULL)
+    progdir = NULL;
+}
 
 int main(int argc, char *argv[])
 {
  lua_State *L;
- char name[MAX_PATH];
-#ifdef _WIN32
- argv[0] = GetModuleFileName(NULL,name,sizeof(name)) ? name : NULL;
-#else
- argv[0] = execpath(argv[0],name,sizeof(name)) ? name : NULL;
-#endif
+ getprog(argv[0]);
+ 
  if (argv[0]==NULL) fatal("srlua","cannot locate this executable");
  L=luaL_newstate();
  if (L==NULL) fatal(argv[0],"not enough memory for state");
