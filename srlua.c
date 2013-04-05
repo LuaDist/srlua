@@ -141,7 +141,7 @@ char* getprog() {
   mib[1] = KERN_PROC;
   mib[2] = KERN_PROC_PATHNAME;
   mib[3] = -1;
-  size_t cb = sizeof(progdir);
+  size_t cb = nsize;
   sysctl(mib, 4, progdir, &cb, NULL, 0);
   n = cb;
 #elif defined(__BSD__)
