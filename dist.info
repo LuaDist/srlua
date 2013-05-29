@@ -1,0 +1,29 @@
+type = "i686"
+arch = "Debian"
+author = "Luiz Henrique de Figueiredo"
+depends = {
+[[lua >= 5.1, < 5.3]],
+}
+
+desc = "A tool for building self-running Lua programs."
+version = "5.2"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[bin/glue]],
+[[bin/srlua]],
+}
+,
+Data = {
+[[share/srlua/README.md]],
+}
+,
+Test = {
+[[share/srlua/test/test.lua]],
+}
+,
+}
+
+license = "MIT/X11"
+name = "srlua"
+url = "http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/"
