@@ -6,11 +6,15 @@
 * This code is hereby placed in the public domain.
 */
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32)
   #include <windows.h>
   #define _PATH_MAX MAX_PATH
 #else
   #define _PATH_MAX PATH_MAX
+#endif
+
+#if defined (__CYGWIN__)
+  #include <sys/cygwin.h>
 #endif
 
 #if defined(__linux__) || defined(__sun)
@@ -122,11 +126,11 @@ char* getprog() {
   int nsize = _PATH_MAX + 1;
   char* progdir = malloc(nsize * sizeof(char));
   char *lb;
-  int n;
+  int n = 0;
 #if defined(__CYGWIN__)
   char win_buff[_PATH_MAX + 1];
   GetModuleFileNameA(NULL, win_buff, nsize);
-  cygwin_conv_to_posix_path(win_buff, progdir);
+  cygwin_conv_path(CCP_WIN_A_TO_POSIX, win_buff, progdir, nsize);
   n = strlen(progdir);
 #elif defined(_WIN32)
   n = GetModuleFileNameA(NULL, progdir, nsize);
@@ -153,7 +157,7 @@ char* getprog() {
   if (n > 0) progdir[n] = 0;
 #elif defined(__APPLE__)
   uint32_t nsize_apple = nsize;
-  if (_NSGetExecutablePath((char *)progdir, &nsize_apple) == 0)
+  if (_NSGetExecutablePath(progdir, &nsize_apple) == 0)
     n = strlen(progdir);
 #else
   // FALLBACK
@@ -167,6 +171,7 @@ char* getprog() {
   sprintf(cmd, "lsof -p %d | awk '{if ($5==\"REG\") { print $9 ; exit}}' 2> /dev/null", pid);
   fd = popen(cmd, "r");
   n = fread(progdir, 1, nsize, fd);
+  pclose(fd);
 
   // remove newline
   if (n > 1) progdir[--n] = '\0';
