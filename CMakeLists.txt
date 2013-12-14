@@ -22,6 +22,8 @@ if (WIN32)
   add_executable(wsrlua WIN32 wmain.c srlua.c srlua.rc)
   target_link_libraries(wsrlua ${LUA_LIBRARIES})
   install_executable(wsrlua)
+elseif ( APPLE )
+  set ( CMAKE_EXE_LINKER_FLAGS "-pagezero_size 10000 -image_base 100000000 -image_base 7fff04c4a000" )
 endif()
 
 install_executable(glue srlua)
